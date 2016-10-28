@@ -12,43 +12,79 @@ describe('My HTTP Server', () => {
 
   it('lists all the boardsports', done => {
     request
-      .get('/boardsports')
-      .end((err, res) => {
-        if (err) return done(err);
-        var boardSports = 'snowskating.json<br>surfing.json<br>';
-        assert.ok(!err);
-        assert.deepEqual(res.text, boardSports);
-        done();     
-      });
+    .get('/boardsports')
+    .end((err, res) => {
+      if (err) return done(err);
+      var boardSports = 'snowskating.json<br>surfing.json<br>';
+      assert.ok(!err);
+      assert.deepEqual(res.text, boardSports);
+      done();
+    });
   });
 
+  it('lists the contents of one file', done => {
+    request
+    .get('/boardsports/surfing')
+    .end((err, res) => {
+      let surfingContents = '{"name":"surfing","environment":"ocean","weather":"off shore winds","equipment":"surfboard"}\n';
+      if (err) return done(err);
+      assert.ok(!err);
+      assert.deepEqual(res.text, surfingContents);
+      done();
+    });
+  });
 
   it('posts POST on page', done => {
     postObject = {name: "skateboarding", environment: "city", weather: "clear", equipment: "skateboard, shoes"};
     request
-      .post('/')
-      .send(postObject)
-      .end((err, res) => {
-        if (err) return done(err);
+    .post('/')
+    .send(postObject)
+    .end((err, res) => {
+      if (err) return done(err);
 
 
-        sander.readFile(server.filePath)
-          .then(function(data){
-            var newSport = JSON.parse(data);
-            assert.deepEqual(newSport, postObject);
-          })
-          .then(sander.unlink(server.filePath))
-          .then(done);
-
-
-        // fs.readFile(server.filePath, 'utf-8', (err, data) => {
-        //   if (err) throw err;
-        //   var newSport = JSON.parse(data);
-        //   console.log('newly saved object:', newSport);
-        //   assert.deepEqual(newSport, postObject);
-        //   done();
-        // });       
-      });
+      sander.readFile(server.filePath)
+        .then(function(data){
+          var newSport = JSON.parse(data);
+          assert.deepEqual(newSport, postObject);
+        })
+        .then(done);
+    });
   });
 
+  it('writes PUT on page', done => {
+    putObject = {name: "skateboarding", environment: "urban", weather: "clear", equipment: "skateboard, shoes"};
+    request
+    .put('/')
+    .send(putObject)
+    .end((err, res) => {
+      if (err) return done(err);
+
+      sander.readFile(server.filePath)
+        .then(function(data){
+          var putSport = JSON.parse(data);
+          assert.deepEqual(putSport, putObject);
+        })
+        .then(done);
+    });
+  });
+
+  it('deletes a file', done => {
+    deleteObject = {name: "skateboarding", environment: "urban", weather: "clear", equipment: "skateboard, shoes"};
+    request
+    .delete('/')
+    .send(deleteObject)
+    .end((err, res) => {
+      console.log("I'm in end");
+      if (err) return done(err);
+
+      sander.readdir('./data/boardsports/')
+        .then(function(data){
+          var resultDir = [ 'snowskating.json', 'surfing.json' ];
+          assert.deepEqual(data, resultDir);
+        })
+        .then(done)
+        .catch(done);
+    });
+  });
 });
